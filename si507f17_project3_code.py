@@ -1,4 +1,5 @@
 from bs4 import BeautifulSoup
+# from urllib2 import urlopen
 import unittest
 import requests
 
@@ -13,20 +14,70 @@ import requests
 ######### PART 0 #########
 
 # Write your code for Part 0 here.
+try:
+  cat_data = open("cat.html",'r').read()
+except:
+  cat_data = requests.get("http://newmantaylor.com/gallery.html").text
+  f = open("cat.html",'w')
+  f.write(cat_data)
+  f.close()
 
+cat_soup = BeautifulSoup(cat_data, 'html.parser')
+
+all_cat_imgs = cat_soup.find_all('img')
+for i in all_cat_imgs:
+	print(i.get('alt',"No alternative text provided!"))
 
 ######### PART 1 #########
 
 # Get the main page data...
+try:
+  nps_gov_data = open("nps_gov_data.html",'r').read()
+except:
+  nps_gov_data = requests.get("https://www.nps.gov/index.htm").text
+  f = open("nps_gov_data.html",'w')
+  f.write(nps_gov_data)
+  f.close()
+
+gov_soup = BeautifulSoup(nps_gov_data, 'html.parser')
+
+the_links = gov_soup.find_all('a')
+
+state_part = gov_soup.find("ul",{"class":"dropdown-menu SearchBar-keywordSearch"})
+
+all_state_links = state_part.find_all('a')
+
+selected_states = ['Michigan', 'Arkansas', 'California']
+for item in all_state_links:
+  state_name = item.text
+  if state_name in selected_states:
+    state_link = "https://www.nps.gov" + item.get('href')
+    file_name = state_name.lower() + "_data.html"
+    try:
+      state_name_data = open(file_name, 'r').read()
+    except:
+      state_name_data = requests.get(state_link).text
+      f = open(file_name,'w')
+      f.write(state_name_data)
+      f.close()
+
+michigan_data = open("michigan_data.html", "r").read()
+michigan_soup = BeautifulSoup(michigan_data, 'html.parser')
+
+arkansas_data = open("arkansas_data.html", "r").read()
+arkansas_soup = BeautifulSoup(arkansas_data, 'html.parser')
+
+california_data = open("california_data.html", "r").read()
+california_soup = BeautifulSoup(california_data, 'html.parser')
+
 
 # Try to get and cache main page data if not yet cached
 # Result of a following try/except block should be that
 # there exists a file nps_gov_data.html,
-# and the html text saved in it is stored in a variable 
+# and the html text saved in it is stored in a variable
 # that the rest of the program can access.
 
 # We've provided comments to guide you through the complex try/except, but if you prefer to build up the code to do this scraping and caching yourself, that is OK.
-
 
 
 
@@ -37,15 +88,15 @@ import requests
 # Result of a following try/except block should be that
 # there exist 3 files -- arkansas_data.html, california_data.html, michigan_data.html
 # and the HTML-formatted text stored in each one is available
-# in a variable or data structure 
+# in a variable or data structure
 # that the rest of the program can access.
 
-# TRY: 
+# TRY:
 # To open and read all 3 of the files
 
 # But if you can't, EXCEPT:
 
-# Create a BeautifulSoup instance of main page data 
+# Create a BeautifulSoup instance of main page data
 # Access the unordered list with the states' dropdown
 
 # Get a list of all the li (list elements) from the unordered list, using the BeautifulSoup find_all method
@@ -70,10 +121,6 @@ import requests
 
 
 
-
-
-
-
 ######### PART 2 #########
 
 ## Before truly embarking on Part 2, we recommend you do a few things:
@@ -92,14 +139,19 @@ import requests
 # Remember that there are things you'll have to be careful about listed in the instructions -- e.g. if no type of park/site/monument is listed in input, one of your instance variables should have a None value...
 
 
-
-
-
 ## Define your class NationalSite here:
 
+class NationalSite(object):
+  def __init__(self, object):
+    self.object_soup = object
+    self.location = self.object_soup.find_all("h4")[1].get_text()
+    self.description_all = self.object_soup.find("div", {"class":"col-md-9 col-sm-9 col-xs-12 table-cell list_left"})
+    self.name = self.description_all.find("h3").get_text()
+    self.type = self.description_all.find("h2").get_text()
+    self.description = self.description_all.find("p").get_text()
 
-
-
+sample_test = NationalSite(california_soup)
+sample_test2 = NationalSite(arkansas_soup)
 
 ## Recommendation: to test the class, at various points, uncomment the following code and invoke some of the methods / check out the instance variables of the test instance saved in the variable sample_inst:
 
@@ -135,4 +187,3 @@ import requests
 ## Note that running this step for ALL your data make take a minute or few to run -- so it's a good idea to test any methods/functions you write with just a little bit of data, so running the program will take less time!
 
 ## Also remember that IF you have None values that may occur, you might run into some problems and have to debug for where you need to put in some None value / error handling!
-
