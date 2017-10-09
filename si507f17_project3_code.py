@@ -141,17 +141,61 @@ california_soup = BeautifulSoup(california_data, 'html.parser')
 
 ## Define your class NationalSite here:
 
-class NationalSite(object):
-  def __init__(self, object):
-    self.object_soup = object
-    self.location = self.object_soup.find_all("h4")[1].get_text()
-    self.description_all = self.object_soup.find("div", {"class":"col-md-9 col-sm-9 col-xs-12 table-cell list_left"})
-    self.name = self.description_all.find("h3").get_text()
-    self.type = self.description_all.find("h2").get_text()
-    self.description = self.description_all.find("p").get_text()
+def get_park_list(state_soup): #getting a list of all the parks in state
+  soup_list = state_soup.find("ul", {"id":"list_parks"}).find_all("li", {"class":"clearfix"})
+  return soup_list
 
-sample_test = NationalSite(california_soup)
-sample_test2 = NationalSite(arkansas_soup)
+class NationalSite(object):
+  def __init__(self, park_soup):
+      self.location = park_soup.find("h4").get_text()
+      self.name = park_soup.find("h3").get_text()
+      links = park_soup.find_all('a')[2]
+      self.url = links['href']
+      try:
+        self.type = park_soup.find("h2").get_text()
+        self.description = park_soup.find("p").get_text().strip()
+      except:
+        self.type = "None"
+        self.description = "None"
+
+
+  def __str__(self):
+    return "{} | {}".format(self.name, self.location)
+
+  def __contains__(self, astring):
+    return astring in self.name
+
+  def get_mailing_address(self):
+    try:
+      park_html_data = requests.get(self.url)
+      basic_info_soup = BeautifulSoup(park_html_data.content, 'html.parser')
+      full_address_block = basic_info_soup.find('div', {"itemprop": "address"})
+      street_address = full_address_block.find('span', {"itemprop": "streetAddress"}).text.strip()
+      city = full_address_block.find('span', {"itemprop": "addressLocality"}).text.strip()
+      state = full_address_block.find('span', {"itemprop": "addressRegion"}).text.strip()
+      zip_code = full_address_block.find('span', {"itemprop": "postalCode"}).text.strip()
+      mail_address = street_address + " / " + city + " / " + state + " / " + zip_code
+      return mail_address
+    except:
+      return ""
+
+
+sample_alcatraz = get_park_list(california_soup)[0] #test function
+sample_class = NationalSite(sample_alcatraz) #test class
+
+print(sample_class)
+print(sample_class.url)
+
+
+print(sample_class.get_mailing_address())
+
+# sample_test = NationalSite(california_soup)
+# sample_test2 = NationalSite(arkansas_soup)
+# # #
+# print(sample_test)
+# print(sample_test2)
+
+#National Park/Site/Monument Name | Location
 
 ## Recommendation: to test the class, at various points, uncomment the following code and invoke some of the methods / check out the instance variables of the test instance saved in the variable sample_inst:
 
@@ -165,12 +209,29 @@ sample_test2 = NationalSite(arkansas_soup)
 
 # Create lists of NationalSite objects for each state's parks.
 
+
 # HINT: Get a Python list of all the HTML BeautifulSoup instances that represent each park, for each state.
 
+ark_list = get_park_list(arkansas_soup)
+cal_list = get_park_list(california_soup)
+mi_list = get_park_list(michigan_soup)
 
+arkansas_natl_sites = []
+for item in ark_list:
+  x = NationalSite(item)
+  arkansas_natl_sites.append(x)
 
+california_natl_sites = []
+for item in cal_list:
+  x = NationalSite(item)
+  california_natl_sites.append(x)
 
-##Code to help you test these out:
+michigan_natl_sites = []
+for item in mi_list:
+  x = NationalSite(item)
+  michigan_natl_sites.append(x)
+
+#Code to help you test these out:
 # for p in california_natl_sites:
 # 	print(p)
 # for a in arkansas_natl_sites:
@@ -181,6 +242,24 @@ sample_test2 = NationalSite(arkansas_soup)
 
 
 ######### PART 4 #########
+import csv
+with open("arkansas.csv", 'w', newline='') as f:
+        writer = csv.writer(f)
+        f.write("Name, Location, Type, Address, Description\n")
+        for obj in arkansas_natl_sites:
+		        writer.writerow([obj.name, obj.location, obj.type, obj.get_mailing_address(), obj.description])
+
+with open("california.csv", 'w', newline='') as f:
+        writer = csv.writer(f)
+        f.write("Name, Location, Type, Address, Description\n")
+        for obj in california_natl_sites:
+		        writer.writerow([obj.name, obj.location, obj.type, obj.get_mailing_address(), obj.description])
+
+with open("michigan.csv", 'w', newline='') as f:
+        writer = csv.writer(f)
+        f.write("Name, Location, Type, Address, Description\n")
+        for obj in michigan_natl_sites:
+		        writer.writerow([obj.name, obj.location, obj.type, obj.get_mailing_address(), obj.description])
 
 ## Remember the hints / things you learned from Project 2 about writing CSV files from lists of objects!
 
