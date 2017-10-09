@@ -151,13 +151,8 @@ class NationalSite(object):
       self.name = park_soup.find("h3").get_text()
       links = park_soup.find_all('a')[2]
       self.url = links['href']
-      try:
-        self.type = park_soup.find("h2").get_text()
-        self.description = park_soup.find("p").get_text().strip()
-      except:
-        self.type = "None"
-        self.description = "None"
-
+      self.type = park_soup.find("h2").get_text() or "None"
+      self.description = park_soup.find("p").get_text().strip() or ""
 
   def __str__(self):
     return "{} | {}".format(self.name, self.location)
